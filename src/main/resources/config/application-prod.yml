@@ -51,9 +51,13 @@ spring:
     properties:
       hibernate.id.new_generator_mappings: true
       hibernate.connection.provider_disables_autocommit: true
-      hibernate.cache.use_second_level_cache: false
+      hibernate.cache.use_second_level_cache: true
       hibernate.cache.use_query_cache: false
       hibernate.generate_statistics: false
+      hibernate.cache.region.factory_class: org.redisson.hibernate.RedissonRegionFactory
+      hibernate.cache.region_prefix: hibernate
+      hibernate.cache.use_structured_entries: true
+      hibernate.cache.redisson.config: config/redis-hibernate.yml
   # Replace by 'prod, faker' to add the faker context and have sample data loaded in production
   liquibase:
     contexts: prod
