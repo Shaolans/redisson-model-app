@@ -4,6 +4,7 @@ import com.mycompany.myapp.repository.UserRepository;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
+import org.redisson.config.SslProvider;
 import org.redisson.spring.cache.CacheConfig;
 import org.redisson.spring.cache.RedissonSpringCacheManager;
 import org.springframework.cache.CacheManager;
@@ -22,7 +23,31 @@ public class CacheConfiguration {
     @Bean
     RedissonClient redisson() throws IOException {
         Config config = new Config();
-        config.useSingleServer().setAddress("redis://127.0.0.1:6379");
+        config.useSingleServer()
+            .setAddress("redis://localhost:6379")
+            .setSubscriptionConnectionMinimumIdleSize(1)
+            .setSubscriptionConnectionPoolSize(50)
+            .setConnectionMinimumIdleSize(24)
+            .setConnectionPoolSize(64)
+            .setDnsMonitoringInterval(5000)
+            .setIdleConnectionTimeout(10000)
+            .setConnectTimeout(10000)
+            .setTimeout(3000)
+            .setRetryAttempts(3)
+            .setRetryInterval(1500)
+            .setDatabase(0)
+            .setPassword(null)
+            .setSubscriptionsPerConnection(5)
+            .setClientName(null)
+            .setSslEnableEndpointIdentification(true)
+            .setSslProvider(SslProvider.JDK)
+            .setSslTruststore(null)
+            .setSslTruststorePassword(null)
+            .setSslKeystore(null)
+            .setSslKeystorePassword(null)
+            .setPingConnectionInterval(0)
+            .setKeepAlive(false)
+            .setTcpNoDelay(false);
         return Redisson.create(config);
     }
 
