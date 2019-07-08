@@ -13,6 +13,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import javax.cache.configuration.MutableConfiguration;
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
+import javax.cache.expiry.ExpiryPolicy;
 
 
 @Configuration
@@ -49,6 +52,7 @@ public class CacheConfiguration {
             .setKeepAlive(false)
             .setTcpNoDelay(false);
         jcacheConfig.setStatisticsEnabled(true);
+        jcacheConfig.setExpiryPolicyFactory(CreatedExpiryPolicy.factoryOf(Duration.ONE_MINUTE));
         jcacheConfiguration = RedissonConfiguration.fromInstance(Redisson.create(config), jcacheConfig);
     }
 
@@ -76,7 +80,6 @@ public class CacheConfiguration {
             cm.destroyCache(cacheName);
         }
         cm.createCache(cacheName, jcacheConfiguration);
-        cm.enableStatistics(cacheName, true);
     }
 
 
