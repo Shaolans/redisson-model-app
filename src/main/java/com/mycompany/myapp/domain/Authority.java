@@ -1,5 +1,8 @@
 package com.mycompany.myapp.domain;
 
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
@@ -14,6 +17,7 @@ import java.util.Objects;
  */
 @Entity
 @Table(name = "jhi_authority")
+@Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 public class Authority implements Serializable {
 
     private static final long serialVersionUID = 1L;

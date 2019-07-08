@@ -1,27 +1,27 @@
 package com.mycompany.myapp.config;
 
-import com.mycompany.myapp.repository.UserRepository;
+import io.github.jhipster.config.JHipsterProperties;
+import org.hibernate.cache.jcache.ConfigSettings;
 import org.redisson.Redisson;
-import org.redisson.api.RedissonClient;
 import org.redisson.config.Config;
 import org.redisson.config.SslProvider;
-import org.redisson.spring.cache.CacheConfig;
-import org.redisson.spring.cache.RedissonSpringCacheManager;
-import org.springframework.cache.CacheManager;
+import org.redisson.jcache.configuration.RedissonConfiguration;
+import org.springframework.boot.autoconfigure.cache.JCacheManagerCustomizer;
+import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
+import javax.cache.configuration.MutableConfiguration;
+
 
 @Configuration
 @EnableCaching
 public class CacheConfiguration {
+    private final javax.cache.configuration.Configuration<Object, Object> jcacheConfiguration;
 
-    @Bean
-    RedissonClient redisson() throws IOException {
+    public CacheConfiguration(JHipsterProperties jHipsterProperties) {
+        MutableConfiguration<Object, Object> jcacheConfig = new MutableConfiguration<>();
         Config config = new Config();
         config.useSingleServer()
             .setAddress("redis://localhost:6379")
@@ -48,16 +48,35 @@ public class CacheConfiguration {
             .setPingConnectionInterval(0)
             .setKeepAlive(false)
             .setTcpNoDelay(false);
-        return Redisson.create(config);
+        jcacheConfig.setStatisticsEnabled(true);
+        jcacheConfiguration = RedissonConfiguration.fromInstance(Redisson.create(config), jcacheConfig);
+    }
+
+
+    @Bean
+    public HibernatePropertiesCustomizer hibernatePropertiesCustomizer(javax.cache.CacheManager cm) {
+        return hibernateProperties -> hibernateProperties.put(ConfigSettings.CACHE_MANAGER, cm);
     }
 
     @Bean
-    CacheManager cacheManager(RedissonClient redissonClient) {
-        Map<String, CacheConfig> config = new HashMap<String, CacheConfig>();
+    public JCacheManagerCustomizer cacheManagerCustomizer() {
+        return cm -> {
+            createCache(cm, com.mycompany.myapp.repository.UserRepository.USERS_BY_LOGIN_CACHE);
+            createCache(cm, com.mycompany.myapp.repository.UserRepository.USERS_BY_EMAIL_CACHE);
+            createCache(cm, com.mycompany.myapp.domain.User.class.getName());
+            createCache(cm, com.mycompany.myapp.domain.Authority.class.getName());
+            createCache(cm, com.mycompany.myapp.domain.User.class.getName() + ".authorities");
+            createCache(cm, com.mycompany.myapp.domain.Project.class.getName());
+        };
+    }
 
-        config.put(UserRepository.USERS_BY_LOGIN_CACHE, new CacheConfig());
-        config.put(UserRepository.USERS_BY_EMAIL_CACHE, new CacheConfig());
-        return new RedissonSpringCacheManager(redissonClient, config);
+    private void createCache(javax.cache.CacheManager cm, String cacheName) {
+        javax.cache.Cache<Object, Object> cache = cm.getCache(cacheName);
+        if (cache != null) {
+            cm.destroyCache(cacheName);
+        }
+        cm.createCache(cacheName, jcacheConfiguration);
+        cm.enableStatistics(cacheName, true);
     }
 
 
